@@ -1,19 +1,4 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JSON 編輯器</title>
-  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://unpkg.com/react-beautiful-dnd@13.1.1/dist/react-beautiful-dnd.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body class="bg-gray-100 text-gray-800">
-  <div id="root"></div>
-  <script type="text/babel">
-    const { useState } = React;
+const { useState } = React;
     const { DragDropContext, Droppable, Draggable } = window.ReactBeautifulDnd;
 
     function App() {
@@ -97,10 +82,21 @@
     }
 
     function StaffEditor({ jsonData, setJsonData, fileName }) {
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const exportToEAD = () => {
+    const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "ead_staff.json";
+    a.click();
+    setTimeout(() => {
+      window.open("ead.html", "_blank");
+    }, 500);
+  };
+    const [selectedIndex, setSelectedIndex] = useState(0);
   const [originalData, setOriginalData] = useState(JSON.parse(JSON.stringify(jsonData)));
   const [showSavedMessage, setShowSavedMessage] = useState(false);
-  const campuses = ["全部", "第一校區", "建工校區", "楠梓校區", "燕巢校區", "旗津校區"];
+  const campuses = ["第一校區", "建工校區", "楠梓校區", "燕巢校區", "旗津校區"];
   const [selectedCampus, setSelectedCampus] = useState("全部");
 
   const fieldMapping = {
@@ -198,17 +194,15 @@
     }
   };
 
+  
+  
   const selected = jsonData[selectedIndex] || null;
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="flex items-center gap-4 mb-6">
-        <button onClick={downloadJSON} className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">下載 JSON</button>
-        <select value={selectedCampus} onChange={(e) => { setSelectedCampus(e.target.value); setSelectedIndex(0); }} className="ml-auto border p-2 rounded shadow-sm bg-white">
-          {campuses.map(campus => (
-            <option key={campus} value={campus}>{campus}</option>
-          ))}
-        </select>
+                        <button onClick={downloadJSON} className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">下載 JSON</button>
+        
       </div>
       <div className="flex gap-6">
         <div className="w-64 bg-white shadow rounded p-4">
@@ -306,8 +300,30 @@
   );
 }
     function RegulationEditor({ jsonData, setJsonData, fileName }) {
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const exportToDocPage = () => {
+    const blob = new Blob([
+      JSON.stringify({
+        sections: [
+          {
+            id: jsonData.sections[0].id,
+            title: jsonData.sections[0].title,
+            forms: data
+          }
+        ]
+      }, null, 2)
+    ], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "document.json";
+    a.click();
+    setTimeout(() => {
+      window.open("document-download.html", "_blank");
+    }, 500);
+  };
+    const [selectedIndex, setSelectedIndex] = useState(0);
   const [originalData, setOriginalData] = useState(JSON.parse(JSON.stringify(jsonData.sections[0].forms)));
+  const [lastDeletedForm, setLastDeletedForm] = useState(null);
   const data = jsonData.sections[0].forms;
 
   const fieldMapping = {
@@ -378,6 +394,7 @@
   };
 
   const deleteForm = () => {
+    setLastDeletedForm(data[selectedIndex]);
     const updated = data.filter((_, i) => i !== selectedIndex);
     jsonData.sections[0].forms = updated;
     setJsonData({ ...jsonData });
@@ -385,17 +402,26 @@
   };
 
   const resetData = () => {
-    jsonData.sections[0].forms = JSON.parse(JSON.stringify(originalData));
-    setJsonData({ ...jsonData });
-    setSelectedIndex(0);
+    if (lastDeletedForm) {
+      jsonData.sections[0].forms.splice(selectedIndex + 1, 0, lastDeletedForm);
+      setJsonData({ ...jsonData });
+      setSelectedIndex(selectedIndex + 1);
+      setLastDeletedForm(null);
+    } else {
+      jsonData.sections[0].forms = JSON.parse(JSON.stringify(originalData));
+      setJsonData({ ...jsonData });
+      setSelectedIndex(0);
+    }
   };
 
+  
+  
   const selected = data[selectedIndex] || null;
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="flex items-center gap-4 mb-6">
-        <button onClick={downloadJSON} className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">下載 JSON</button>
+                        <button onClick={downloadJSON} className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">下載 JSON</button>
         <div className="ml-auto text-sm text-gray-600">目前模式：法規 / 文檔下載</div>
       </div>
 
@@ -467,6 +493,3 @@
 }
 
     ReactDOM.createRoot(document.getElementById("root")).render(<App />);
-  </script>
-</body>
-</html>

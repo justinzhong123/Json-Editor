@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../../Downloads/json_editor_fixed_export"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "Json-Editor",
+		"liveServer.settings.port": 5501
+	}
+}
